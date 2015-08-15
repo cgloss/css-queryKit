@@ -1,4 +1,4 @@
-.body{
+body{
 	background: #eee;
 }
 
@@ -6,8 +6,29 @@
     body {
         background: red;
     }
+    footer {
+        background: black;
+    }
 }
 
-.datetime{
-	derp:worp;
+p{
+	color:blue;
+}
+
+@datetime(start: 2015-08-11 )and(end: 2015-08-16) {
+    body {
+        background: green;
+    }
+    footer {
+        background: white;
+    }
+}
+
+@datetime(start: 2015-08-16 ){
+    body {
+        background: blue;
+    }
+    footer {
+        background: white;
+    }
 }
