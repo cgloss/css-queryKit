@@ -1,5 +1,18 @@
 <?php
+// make this encrypt rand and verify handshake
 $key = 'wXr375';
+
+// WIP - need to aggregate all start ends on first pass, then find the datetime that is closest to 
+// current time, then set a page refresh server side for the time at which the css will require an 
+// update, eleviating any client side manip or intrusion, and takes js out of the equation
+// use header("Refresh:0; url=url.php");, not setting second parameter refreshies self.
+// alternativly could use meta refresh <meta http-equiv="refresh" content="time in seconds">
+// if the blink is too jaring, use an ajax call to replace the css.
+// or use the flush sleep hack to execute the change. like:
+// ob_flush(); // flush the output buffer
+// flush(); // push to client
+// sleep(2); // pause before executing further.
+
 // check if temps is set from the ajax call
 if(isset($_REQUEST['qk_temps_'.$key])){
 	foreach (explode(',',$_REQUEST['qk_temps_'.$key]) as $temp){
@@ -9,7 +22,7 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 	class querykit{
 		// inits
 		static $now,$path,$salt;
-	    private $dom,$temps;
+	    private $dom,$temps,$times,$till;
 	    public $term,$html;
 	    
 	    public function __construct($arg,$salt){
@@ -27,6 +40,8 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 			$this->term = $arg;
 			// dom parse self
 			$this->html = $this->qk_parse(file_get_contents('..'.self::$path, FILE_USE_INCLUDE_PATH));
+			// set the seconds till next query rule
+			//$this->till = $this->gettill($this->times);
 			die();
 	    }
 	    protected function qk_parse($html){
@@ -81,7 +96,7 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 				$start = $this->getset('start',$v);
 				$end = $this->getset('end',$v);
 				// check if css should be applied according to arguments set in css file
-				if (self::$now >= new DateTime($start) && self::$now <= new DateTime($end)) {
+				if (self::$now >= $start && self::$now <= $end) {
 				    $css=str_replace($v, $ins[1][$k], $css);
 				}	
 			}
@@ -91,12 +106,34 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 	    protected function getset($arg,$str){
 			preg_match_all('/(s?'.$arg.'.*?)\.?\)/', $str, $ms);
 			if(isset($ms[1][0])){
-			$v = explode($arg.':',$ms[1][0])[1];
-			return $v;
-			} return self::$now->format('Y-m-d H:i:s');
+				$v = new DateTime(explode($arg.':',$ms[1][0])[1]);
+				$this->times[]=$v;
+				return $v;
+			} return self::$now;
+		}
+
+		protected function gettill(){
+			$interval = null;
+			foreach ((array)$this->times as $k => $dt){
+				if($dt < self::$now){
+					unset($this->times[$k]);
+				}
+			}
+			if($this->times){
+				$interval =  min($this->times)->getTimestamp() - self::$now->getTimestamp();
+			}
+			return $interval;
 		}
 
 		public function __destruct(){
+			//print_r($this->till);
+			// if($this->till){
+			// 	$meta = $this->dom->createElement('meta');
+			// 	$meta->setAttribute("http-equiv",'refresh');
+			// 	$meta->setAttribute("content",$this->till);
+			// 	$this->dom->getElementsByTagName('head')->item(0)->appendChild($meta);
+			// }
+			//echo $this->dom->saveHTML();
 			echo $this->html;
 		}
 
