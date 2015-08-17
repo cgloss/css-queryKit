@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <head>
 <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width" />
-<link rel="stylesheet" href="test.css" type="text/css" media="all" />
+<link rel="stylesheet" href="demo.css" type="text/css" media="all" />
 <title>test for more queries</title>
 </head>
 <body>
-derpt
+derp
 </body>
 </html>

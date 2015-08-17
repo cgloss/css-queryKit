@@ -68,7 +68,6 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 			$path_parts = pathinfo($cssfile);
 			$temp = tempnam($path_parts['dirname'], $path_parts['filename']);
 			$data = file_get_contents($cssfile, FILE_USE_INCLUDE_PATH);
-			// chk if can use base temp no ext **wip
 			file_put_contents($temp.'.css', $data);
 			$temp_parts = pathinfo($temp);
 			unlink($temp);

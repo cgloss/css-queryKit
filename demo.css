@@ -15,7 +15,7 @@ p{
 	color:blue;
 }
 
-@datetime(start: 2015-08-11 America/New_York)and(end: 2015-08-18 12:00) {
+@datetime(start: 2015-08-11){
     body {
         background: green;
     }
