@@ -2,7 +2,7 @@ body{
 	background: #eee;
 }
 
-@datetime (start: 2015-08-11 11:30:00 ) and (end: 2015-08-11 12:30:00){
+@datetime (start: 2015-08-11 11:30:00 America/New_York) and (end: 2015-08-11 12:30:00){
     body {
         background: red;
     }
@@ -15,7 +15,7 @@ p{
 	color:blue;
 }
 
-@datetime(start: 2015-08-11 )and(end: 2015-08-16) {
+@datetime(start: 2015-08-11 America/New_York)and(end: 2015-08-18 12:00) {
     body {
         background: green;
     }
@@ -24,7 +24,7 @@ p{
     }
 }
 
-@datetime(start: 2015-08-16 ){
+@datetime(start: 8/16/2015 America/New_York) and (end: 8/17/2015 12:53pm){
     body {
         background: blue;
     }

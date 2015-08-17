@@ -1,18 +1,6 @@
 <?php
-// make this encrypt rand and verify handshake
+// set a salt
 $key = 'wXr375';
-
-// WIP - need to aggregate all start ends on first pass, then find the datetime that is closest to 
-// current time, then set a page refresh server side for the time at which the css will require an 
-// update, eleviating any client side manip or intrusion, and takes js out of the equation
-// use header("Refresh:0; url=url.php");, not setting second parameter refreshies self.
-// alternativly could use meta refresh <meta http-equiv="refresh" content="time in seconds">
-// if the blink is too jaring, use an ajax call to replace the css.
-// or use the flush sleep hack to execute the change. like:
-// ob_flush(); // flush the output buffer
-// flush(); // push to client
-// sleep(2); // pause before executing further.
-
 // check if temps is set from the ajax call
 if(isset($_REQUEST['qk_temps_'.$key])){
 	foreach (explode(',',$_REQUEST['qk_temps_'.$key]) as $temp){
@@ -21,15 +9,19 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 }elseif(!class_exists('querykit')){
 	class querykit{
 		// inits
-		static $now,$path,$salt;
-	    private $dom,$temps,$times,$till;
-	    public $term,$html;
+		static $path,$salt;
+	    private $dom,$temps,$times,$till,$refresh;
+	    public $term,$html,$now,$zone;
 	    
-	    public function __construct($arg,$salt){
+	    public function __construct($arg,$salt,$zone,$refresh='header'){
+			// set refresh type
+			$this->refresh = $refresh;
+			// set timezone
+			$this->zone = $zone;
 			// set temp store
 			$this->temps = array();
 			// set current dt
-			self::$now = new DateTime();
+			$this->now = new DateTime();
 			// self path
 			self::$path = $_SERVER['PHP_SELF'];
 			// bake dom
@@ -41,7 +33,7 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 			// dom parse self
 			$this->html = $this->qk_parse(file_get_contents('..'.self::$path, FILE_USE_INCLUDE_PATH));
 			// set the seconds till next query rule
-			//$this->till = $this->gettill($this->times);
+			$this->till = $this->gettill($this->times);
 			die();
 	    }
 	    protected function qk_parse($html){
@@ -95,8 +87,10 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 			foreach ($ins[0] as $k => $v){
 				$start = $this->getset('start',$v);
 				$end = $this->getset('end',$v);
+				$this->now->setTimezone(new DateTimeZone($start->getTimezone()->getName()));
+
 				// check if css should be applied according to arguments set in css file
-				if (self::$now >= $start && self::$now <= $end) {
+				if ($this->now >= $start && $this->now <= $end) {
 				    $css=str_replace($v, $ins[1][$k], $css);
 				}	
 			}
@@ -106,38 +100,65 @@ if(isset($_REQUEST['qk_temps_'.$key])){
 	    protected function getset($arg,$str){
 			preg_match_all('/(s?'.$arg.'.*?)\.?\)/', $str, $ms);
 			if(isset($ms[1][0])){
-				$v = new DateTime(explode($arg.':',$ms[1][0])[1]);
+				$zone = $this->getzone($ms[1][0]);
+
+				if($zone == null && $arg == 'end'){
+					$zone = $this->getset('start',$str)->getTimezone()->getName();
+				}
+				if($zone == null){
+					$zone = $this->zone;
+				}
+
+				$v = new DateTime(explode($arg.':',$ms[1][0])[1], new DateTimeZone($zone));
 				$this->times[]=$v;
 				return $v;
-			} return self::$now;
+			} 
+			return $this->now;
+		}
+
+		protected function getzone($str){
+			foreach (timezone_identifiers_list() as $z) {
+				if (strpos($str,$z)){
+					return $z;
+				}
+			}
+			return null;
 		}
 
 		protected function gettill(){
 			$interval = null;
 			foreach ((array)$this->times as $k => $dt){
-				if($dt < self::$now){
+				if($dt < $this->now){
 					unset($this->times[$k]);
 				}
 			}
 			if($this->times){
-				$interval =  min($this->times)->getTimestamp() - self::$now->getTimestamp();
+				$interval =  min($this->times)->getTimestamp() - $this->now->getTimestamp();
 			}
 			return $interval;
 		}
 
 		public function __destruct(){
-			//print_r($this->till);
-			// if($this->till){
-			// 	$meta = $this->dom->createElement('meta');
-			// 	$meta->setAttribute("http-equiv",'refresh');
-			// 	$meta->setAttribute("content",$this->till);
-			// 	$this->dom->getElementsByTagName('head')->item(0)->appendChild($meta);
-			// }
-			//echo $this->dom->saveHTML();
+			
+			if($this->till){
+				if($this->refresh == 'meta'){
+					// meta refresh option:
+					$meta = $this->dom->createElement('meta');
+					$meta->setAttribute("http-equiv",'refresh');
+					$meta->setAttribute("content",$this->till+1);
+					$this->dom->getElementsByTagName('head')->item(0)->appendChild($meta);
+				 	$this->html = $this->dom->saveHTML();
+				}
+
+				if($this->refresh == 'header'){
+					// header refresh option:
+					header('Refresh:'.$this->till+1);
+				}
+			}
 			echo $this->html;
 		}
 
 	}
-	$makeitso = new querykit('datetime',$key);
+	$makeitso = new querykit('datetime',$key,'America/New_York','meta');
 }
 ?>
