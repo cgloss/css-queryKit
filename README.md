@@ -23,8 +23,7 @@ To use, simply include queryKit.php prior to any output. See demo files.
 
 Design & Development: 
 
-Christian Gloss
-[@retroantix](https://github.com/cgloss)
+[@cgloss](https://github.com/cgloss)
 
 ## License
 
